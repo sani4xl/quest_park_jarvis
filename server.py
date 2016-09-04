@@ -39,11 +39,40 @@ elementsPoolJson = """[
 #mp3Player.set_media(media)
 #mp3Player.play()
 pygame.mixer.init()
-pygame.mixer.music.load("audio/soundtrack/win.mp3")
-pygame.mixer.music.play()
+SONG_END = pygame.USEREVENT + 1
+pygame.mixer.music.set_endevent(SONG_END)
+#pygame.mixer.music.load("audio/soundtrack/win.mp3")
+#pygame.mixer.music.play()
 
-time.sleep(10)
-sys.exit()
+#time.sleep(2)
+#pygame.mixer.music.load("audio/soundtrack/sound1.mp3")
+#pygame.mixer.music.play()
+
+_tracks_library = {}
+def addTrackToLibrary(trackId, initPath):
+	global _tracks_library	
+	path = _tracks_library.get(trackId)
+	if path == None:
+		_tracks_library[trackId] = initPath
+	return initPath
+
+def playTrackById(trackId):
+	global _tracks_library
+	path = _tracks_library.get(trackId)
+	pygame.mixer.music.stop()
+	if path != None:
+		pygame.mixer.music.load(path)
+		pygame.mixer.music.play()
+	
+
+addTrackToLibrary('win', "audio/soundtrack/win.mp3")
+addTrackToLibrary('sound1', "audio/soundtrack/sound1.mp3")
+#playTrackById('sound1')
+
+	
+
+#time.sleep(10)
+#sys.exit()
 
 elementsPool = json.loads(elementsPoolJson)
 led = port.PA7
@@ -54,7 +83,7 @@ gpio.init()
 
 
 #gpio.setcfg(port.PA7, gpio.OUTPUT)
-#gpio.setcfg(button, gpio.INPUT)
+gpio.setcfg(button, gpio.INPUT)
 #gpio.output(port.PA7, gpio.HIGH)
 #sleep(1)
 #gpio.output(port.PA7, gpio.LOW)
@@ -71,10 +100,21 @@ def setPortValue(element_port, value):
 	gpioPort = getattr(port, element_port)
 	gpio.output(gpioPort,  value)
 
+def getElementById(elementId):
+	global elementsPool
+	currentElement = filter(lambda element: element['id'] == elementId, elementsPool)[0]
+	return currentElement
+
 
 #sys.exit()
 
 #gpio.pullup(button, gpio.PULLUP)
+
+def doTracks():
+	while True:
+		k = 1
+		#print(pygame.mixer.music.get_busy())
+		#	print(event.type)
 
 def ioListen():
 	global buttonState
@@ -84,12 +124,17 @@ def ioListen():
 			state = gpio.input(button)
 			#print(state)
 			if state:
-				if buttonState:
-					gpio.output(port.PA7, gpio.LOW)
-					buttonState = False
-				else:
-					gpio.output(port.PA7, gpio.HIGH)
-					buttonState = True
+				currentElement = getElementById('led1')
+				currentElement['state'] = 0 if currentElement['state'] else 1
+				setPortValue(currentElement['port'], gpio.HIGH if currentElement['state'] else gpio.LOW)
+
+
+				# buttonState:
+				#gpio.output(port.PA7, gpio.LOW)
+				#buttonState = False
+				#else:
+				#	gpio.output(port.PA7, gpio.HIGH)
+				#	buttonState = True
 			sleep(0.4)
 
 
@@ -132,6 +177,13 @@ def doServer():
 					#self.wfile.write(data)
 					output = data
 
+			
+			elif url_path == '/get_tracks':
+				global _tracks_library	
+				self.send_header('content-type','applicaiton/json')
+				response = {}
+				response['tracks'] = _tracks_library
+				output = json.dumps(response)
 			elif url_path == '/get_controls':
 				self.send_header('content-type','application/json')
 				response = {}
@@ -146,6 +198,12 @@ def doServer():
 				currentElement['state'] = int(queryParams['state'])
 				setPortValue(currentElement['port'], gpio.HIGH if currentElement['state'] else gpio.LOW)
 				ouput = "done"
+
+			elif url_path == '/play_track':			
+				
+				playTrackById(queryParams['trackId'])				
+				ouput = "done"
+
 			elif url_path == '/turn':
 				if buttonState:
 					gpio.output(port.PA7, gpio.LOW)
@@ -169,10 +227,14 @@ def doStart():
 	#thread.start_new_thread(ioListen())
 	t2 = threading.Thread(target=doServer)
 	t1 = threading.Thread(target=ioListen)
+	t3 = threading.Thread(target=doTracks)
+	
 	t1.daemon = True
 	t2.daemon = True
+	t3.daemon = True
 	t2.start()
 	t1.start()
+	t3.start()
 		  
 #except:
 #	print "error with threading"
