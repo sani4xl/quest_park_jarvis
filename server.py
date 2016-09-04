@@ -7,6 +7,9 @@ import threading
 import urlparse
 import re
 import json
+#import vlc
+import pygame
+import time
 from BaseHTTPServer import BaseHTTPRequestHandler,HTTPServer
 
 #if not os.getegid() == 0:
@@ -27,6 +30,20 @@ elementsPoolJson = """[
  "state" : false
 }
 ]""";
+
+
+
+#mp3Instance = vlc.Instance()
+#mp3Player = mp3Instance.media_player_new()
+#media = mp3Instance.media_new('win.mp3')
+#mp3Player.set_media(media)
+#mp3Player.play()
+pygame.mixer.init()
+pygame.mixer.music.load("audio/soundtrack/win.mp3")
+pygame.mixer.music.play()
+
+time.sleep(10)
+sys.exit()
 
 elementsPool = json.loads(elementsPoolJson)
 led = port.PA7
