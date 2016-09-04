@@ -4,12 +4,14 @@ anJs = {
   routes:
    	{
   		get_controls: "http://192.168.1.239:8080/get_controls",
-  		switch_state: "http://192.168.1.239:8080/switch_state"
+  		switch_state: "http://192.168.1.239:8080/switch_state",
+  		get_tracks: "http://192.168.1.239:8080/get_tracks",
+  		play_track: "http://192.168.1.239:8080/play_track"
 	}
 }
 
-app.controller('mainController',  ['$scope','$http', '$window', '$timeout', '$compile',
-  function($scope, $http, $window,  $timeout, $compile) {
+app.controller('mainController',  ['$scope','$http', '$window', '$timeout', '$compile', '$interval',
+  function($scope, $http, $window,  $timeout, $compile, $interval) {
     
     $scope.switchState = function(control){
     	control.state = !control.state;
@@ -52,7 +54,43 @@ app.controller('mainController',  ['$scope','$http', '$window', '$timeout', '$co
     }    
 
     $scope.refreshControls();
+    // autorefresh
+    //$interval($scope.refreshControls, 5000);
+
+    
+    $scope.refreshTracks = function(page, preload){
+    	var params = {};
+      
+    	$http({
+        	method: 'GET',
+        	url: anJs.routes.get_tracks,
+        	params : params
+    	}).
+    	success( function( data, status, headers, config ) {
+        	$scope.tracks = data.tracks;  
+        	$scope.tracks['stop'] = "";
+
+      	}).
+      	error(function(data, status, headers, config) {});
+    }    
+
+    $scope.refreshTracks();
+
+    $scope.playTrack = function(trackId){
+    	var params = {trackId: trackId}
+    	$http({
+        	method: 'GET',
+        	url: anJs.routes.play_track,
+        	params : params
+      	}).
+      	success( function( data, status, headers, config ) {
+        	
+      	}).
+      	error(function(data, status, headers, config) {});
+    }
+
 }]);
+
 
 angular.module('mainApp').directive('clickPrevent', function() {
   return function(scope, element, attrs) {

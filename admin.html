@@ -4,14 +4,30 @@
 		<script src="js/app.js"></script>
 	</head>
 	<body>
+		
 		<div ng-app="mainApp" ng-controller="mainController">
+			<h2>Controls</h2>
 			<div id="controls-area">
 					<div ng-repeat="control in controls track by $index">
         				<label ng-bind="control.title"></label>
         				<button ng-click="switchState(control)" ng-bind="control.state ? 'On' : 'Off'"></button>
     				</div>
 			</div>
+
+			<h2>Tracks</h2>
+			<div id="controls-area">
+					<div ng-repeat="(trackId, soundTrack) in tracks track by $index">
+        				<!--<label ng-bind="soundTrack.title"></label>
+        				<button ng-click="switchState(control)" ng-bind="control.state ? 'On' : 'Off'"></button>
+        			-->
+        				<button ng-click="playTrack(trackId)" ng-bind="trackId"></button>
+        				
+    				</div>
+    			
+			</div>
 		</div>
+
+
 
 	</body>
 </html>
