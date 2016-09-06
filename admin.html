@@ -16,6 +16,7 @@
 
 			<h2>Tracks</h2>
 			<div id="controls-area">
+					Current track: <strong ng-bind="current_track"></strong>
 					<div ng-repeat="(trackId, soundTrack) in tracks track by $index">
         				<!--<label ng-bind="soundTrack.title"></label>
         				<button ng-click="switchState(control)" ng-bind="control.state ? 'On' : 'Off'"></button>
