@@ -7,6 +7,7 @@ import threading
 import urlparse
 import re
 import json
+import random
 #import vlc
 import pygame
 import time
@@ -47,6 +48,10 @@ pygame.mixer.music.set_endevent(SONG_END)
 #time.sleep(2)
 #pygame.mixer.music.load("audio/soundtrack/sound1.mp3")
 #pygame.mixer.music.play()
+#effect = pygame.mixer.Sound('audio/sound/hit_button.wav');
+#effect.play()
+#time.sleep(5)
+#sys.exit()
 
 _tracks_library = {}
 def addTrackToLibrary(trackId, initPath):
@@ -56,18 +61,27 @@ def addTrackToLibrary(trackId, initPath):
 		_tracks_library[trackId] = initPath
 	return initPath
 
-def playTrackById(trackId):
-	global _tracks_library
+def playTrackById(trackId):	
+	global _current_playing_track
+	global _tracks_library	
 	path = _tracks_library.get(trackId)
 	pygame.mixer.music.stop()
 	if path != None:
+		_current_playing_track = trackId
 		pygame.mixer.music.load(path)
 		pygame.mixer.music.play()
 	
+def playCurrentTrack():
+	global _current_playing_track
+	playTrackById(_current_playing_track)
 
 addTrackToLibrary('win', "audio/soundtrack/win.mp3")
 addTrackToLibrary('sound1', "audio/soundtrack/sound1.mp3")
-#playTrackById('sound1')
+addTrackToLibrary('sound2', "audio/soundtrack/sound2.mp3")
+#_current_playing_track = 'win'
+#playCurrentTrack()
+
+playTrackById('win')
 
 	
 
@@ -111,9 +125,21 @@ def getElementById(elementId):
 #gpio.pullup(button, gpio.PULLUP)
 
 def doTracks():
+	global _current_playing_track
+
 	while True:
 		k = 1
-		#print(pygame.mixer.music.get_busy())
+		if not pygame.mixer.music.get_busy():
+				
+			
+			next_track = random.choice(  _tracks_library.keys() )
+			while next_track == _current_playing_track:
+				next_track = random.choice(  _tracks_library.keys() )
+			#_current_playing_track = next_track
+			playTrackById(next_track)
+		
+			#playCurrentTrack()
+
 		#	print(event.type)
 
 def ioListen():
@@ -184,6 +210,17 @@ def doServer():
 				response = {}
 				response['tracks'] = _tracks_library
 				output = json.dumps(response)
+			elif url_path == '/current_track':
+				global _tracks_library	
+				global _current_playing_track
+				#self.send_header('content-type','applicaiton/json')
+				self.send_header('content-type','text/html')
+
+				#response = {}
+				#response['tracks'] = _tracks_library
+				output = _current_playing_track
+				#json.dumps(response)
+
 			elif url_path == '/get_controls':
 				self.send_header('content-type','application/json')
 				response = {}
