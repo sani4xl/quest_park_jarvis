@@ -42,6 +42,7 @@ elementsPoolJson = """[
 pygame.mixer.init()
 SONG_END = pygame.USEREVENT + 1
 pygame.mixer.music.set_endevent(SONG_END)
+pygame.mixer.music.set_volume(0.5) # 50% volume
 #pygame.mixer.music.load("audio/soundtrack/win.mp3")
 #pygame.mixer.music.play()
 
@@ -52,6 +53,8 @@ pygame.mixer.music.set_endevent(SONG_END)
 #effect.play()
 #time.sleep(5)
 #sys.exit()
+_current_playing_track = None
+_tracks_are_playing = False
 
 _tracks_library = {}
 def addTrackToLibrary(trackId, initPath):
@@ -64,24 +67,44 @@ def addTrackToLibrary(trackId, initPath):
 def playTrackById(trackId):	
 	global _current_playing_track
 	global _tracks_library	
+	global _tracks_are_playing
 	path = _tracks_library.get(trackId)
 	pygame.mixer.music.stop()
-	if path != None:
+	if path != None:		
 		_current_playing_track = trackId
 		pygame.mixer.music.load(path)
 		pygame.mixer.music.play()
+		#_tracks_are_playing = True
+
 	
 def playCurrentTrack():
 	global _current_playing_track
 	playTrackById(_current_playing_track)
 
 addTrackToLibrary('win', "audio/soundtrack/win.mp3")
-addTrackToLibrary('sound1', "audio/soundtrack/sound1.mp3")
-addTrackToLibrary('sound2', "audio/soundtrack/sound2.mp3")
+addTrackToLibrary('track1', "audio/soundtrack/sound1.mp3")
+addTrackToLibrary('track2', "audio/soundtrack/sound2.mp3")
 #_current_playing_track = 'win'
 #playCurrentTrack()
 
 playTrackById('win')
+# SOUNDS
+_sounds_library = {}
+def addSoundToLibrary(trackId, initPath):
+	global _sounds_library	
+	sound = _sounds_library.get(trackId)
+	if sound == None:
+		sound = pygame.mixer.Sound(initPath);
+		_sounds_library[trackId] = sound
+	return sound
+
+def playSoundById(trackId):	
+	global _sounds_library	
+	sound = _sounds_library.get(trackId)
+	if sound != None:
+		sound.play()
+	
+addSoundToLibrary('hit_button', "audio/sound/hit_button.wav")
 
 	
 
@@ -126,17 +149,20 @@ def getElementById(elementId):
 
 def doTracks():
 	global _current_playing_track
+	global _tracks_are_playing
 
 	while True:
 		k = 1
-		if not pygame.mixer.music.get_busy():
+		if _tracks_are_playing and not pygame.mixer.music.get_busy():
 				
 			
 			next_track = random.choice(  _tracks_library.keys() )
 			while next_track == _current_playing_track:
-				next_track = random.choice(  _tracks_library.keys() )
-			#_current_playing_track = next_track
+				next_track = random.choice(  _tracks_library.keys() )			
+			print(next_track)
 			playTrackById(next_track)
+		elif pygame.mixer.music.get_busy():
+			_tracks_are_playing = True
 		
 			#playCurrentTrack()
 
@@ -210,6 +236,12 @@ def doServer():
 				response = {}
 				response['tracks'] = _tracks_library
 				output = json.dumps(response)
+			elif url_path == '/get_sounds':
+				global _sounds_library	
+				self.send_header('content-type','applicaiton/json')
+				response = {}
+				response['sounds'] = _sounds_library.keys()
+				output = json.dumps(response)
 			elif url_path == '/current_track':
 				global _tracks_library	
 				global _current_playing_track
@@ -234,12 +266,25 @@ def doServer():
 				print currentElement
 				currentElement['state'] = int(queryParams['state'])
 				setPortValue(currentElement['port'], gpio.HIGH if currentElement['state'] else gpio.LOW)
-				ouput = "done"
+				output = "done"
+			elif url_path == '/set_volume':			
+				newVolume = float(queryParams['volume'])
+				pygame.mixer.music.set_volume(newVolume) # in percent 0 to 1.0
 
 			elif url_path == '/play_track':			
-				
+				global _tracks_are_playing
+				_tracks_are_playing = False
+				pygame.mixer.music.stop()				
 				playTrackById(queryParams['trackId'])				
-				ouput = "done"
+				output = "playing_track"
+			elif url_path == '/stop_track':			
+				global _tracks_are_playing
+				_tracks_are_playing = False
+				pygame.mixer.music.stop()								
+				output = "track_stopped"
+			elif url_path == '/play_sound':							
+				playSoundById(queryParams['trackId'])				
+				output = "done"
 
 			elif url_path == '/turn':
 				if buttonState:
