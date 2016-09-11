@@ -6,7 +6,8 @@ anJs = {
   		get_controls: "http://192.168.1.239:8080/get_controls",
   		switch_state: "http://192.168.1.239:8080/switch_state",
   		get_tracks: "http://192.168.1.239:8080/get_tracks",
-  		play_track: "http://192.168.1.239:8080/play_track"
+  		play_track: "http://192.168.1.239:8080/play_track",
+  		current_track: "http://192.168.1.239:8080/current_track"
 	}
 }
 
@@ -75,6 +76,26 @@ app.controller('mainController',  ['$scope','$http', '$window', '$timeout', '$co
     }    
 
     $scope.refreshTracks();
+
+    $scope.refreshCurrentTrack = function(){
+    	var params = {};
+      
+    	$http({
+        	method: 'GET',
+        	url: anJs.routes.current_track,
+        	params : params
+    	}).
+    	success( function( data, status, headers, config ) {
+        	$scope.current_track = data;  
+        	//$scope.tracks['stop'] = "";
+
+      	}).
+      	error(function(data, status, headers, config) {});
+    } 
+
+    $scope.refreshCurrentTrack();
+    // autorefresh
+    $interval($scope.refreshCurrentTrack, 5000);   
 
     $scope.playTrack = function(trackId){
     	var params = {trackId: trackId}
