@@ -1,22 +1,25 @@
 var app = angular.module('mainApp', ['timer']);
-
+var serverAddr = '192.168.1.131:8080';
 anJs = {
   routes:
    	{
-  		get_controls: "http://192.168.1.239:8080/get_controls",
-  		switch_state: "http://192.168.1.239:8080/switch_state",
+  		get_controls: "http://"+ serverAddr +"/get_controls",
+  		switch_state: "http://"+ serverAddr +"/switch_state",
 
-      set_volume: "http://192.168.1.239:8080/set_volume",
+      get_modules: "http://"+ serverAddr +"/get_modules",
+      activate_module: "http://"+ serverAddr +"/activate_module",
+
+      set_volume: "http://"+ serverAddr +"/set_volume",
   		
-      get_tracks: "http://192.168.1.239:8080/get_tracks",
-  		play_track: "http://192.168.1.239:8080/play_track",
-      stop_track: "http://192.168.1.239:8080/stop_track",
+      get_tracks: "http://"+ serverAddr +"/get_tracks",
+  		play_track: "http://"+ serverAddr +"/play_track",
+      stop_track: "http://"+ serverAddr +"/stop_track",
 
-      get_sounds: "http://192.168.1.239:8080/get_sounds",
-      play_sound: "http://192.168.1.239:8080/play_sound",
+      get_sounds: "http://"+ serverAddr +"/get_sounds",
+      play_sound: "http://"+ serverAddr +"/play_sound",
       
 
-  		current_track: "http://192.168.1.239:8080/current_track"
+  		current_track: "http://"+ serverAddr +"/current_track"
 	}
 }
 
@@ -73,6 +76,20 @@ app.controller('mainController',  ['$scope','$http', '$window', '$timeout', '$co
       	}).
       	error(function(data, status, headers, config) {});
     }
+
+    $scope.activateModule = function(module){
+      module.activate = !module.activate;
+      var params = {id: module.id, state: module.activate ? 1 : 0}
+      $http({
+          method: 'GET',
+          url: anJs.routes.activate_module,
+          params : params
+        }).
+        success( function( data, status, headers, config ) {
+          //$scope.controls = data.controls;  
+        }).
+        error(function(data, status, headers, config) {});
+    }
     
     /*
     for(var i in states){
@@ -103,6 +120,25 @@ app.controller('mainController',  ['$scope','$http', '$window', '$timeout', '$co
     $scope.refreshControls();
     // autorefresh
     //$interval($scope.refreshControls, 5000);
+
+    $scope.refreshModules = function(page, preload){
+      
+      
+      var params = {};
+      
+
+      $http({
+        method: 'GET',
+        url: anJs.routes.get_modules,
+        params : params
+      }).
+      success( function( data, status, headers, config ) {
+        $scope.modules = data.modules;  
+      }).
+      error(function(data, status, headers, config) {});
+    }    
+
+    $scope.refreshModules();
 
     
     $scope.refreshTracks = function(page, preload){

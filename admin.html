@@ -35,6 +35,14 @@
     				</div>
 			</div>
 
+			<h2>Modules</h2>
+			<div id="modules-area">
+					<div ng-repeat="module in modules track by $index">
+        				<label ng-bind="module.title"></label>
+        				<button ng-click="activateModule(module)" ng-bind="module.activate ? 'On' : 'Off'"></button>
+    				</div>
+			</div>
+
 			<h2>Tracks</h2>
 			Volume: <input type="range" name="volume" min="0" max="1" step="0.05" ng-model="tracksVolume" 
 			ng-change="volumeChange()" />
