@@ -32,6 +32,14 @@ elementsPoolJson = """[
 }
 ]""";
 
+modulesPoolJson = """[
+{
+ "id" : "module1",
+ "title" : "module 1",
+ "activate" : 0
+}
+]""";
+
 
 
 #mp3Instance = vlc.Instance()
@@ -110,6 +118,8 @@ addSoundToLibrary('hit_button', "audio/sound/hit_button.wav")
 
 #time.sleep(10)
 #sys.exit()
+
+modulesPool  = json.loads(modulesPoolJson)
 
 elementsPool = json.loads(elementsPoolJson)
 led = port.PA7
@@ -258,7 +268,13 @@ def doServer():
 				response = {}
 				response['controls'] = elementsPool	
 				output =  json.dumps(response)
-				#self.wfile.write(jsonString)
+
+			elif url_path == '/get_modules':
+				self.send_header('content-type','application/json')
+				response = {}
+				response['modules'] = modulesPool	
+				output =  json.dumps(response)
+			
 			elif url_path == '/switch_state':			
 				#currentElement = (element for element in elementsPool if element['id'] == queryParams['id']).next()
 				currentElement = filter(lambda element: element['id'] == queryParams['id'], elementsPool)[0]
@@ -267,6 +283,21 @@ def doServer():
 				currentElement['state'] = int(queryParams['state'])
 				setPortValue(currentElement['port'], gpio.HIGH if currentElement['state'] else gpio.LOW)
 				output = "done"
+
+			elif url_path == '/activate_module':			
+				#currentElement = (element for element in elementsPool if element['id'] == queryParams['id']).next()
+				module = filter(lambda element: element['id'] == queryParams['id'], modulesPool)[0]
+				#print queryParams['id']
+				print module
+				module['activate'] = int(queryParams['state'])
+				#setPortValue(currentElement['port'], gpio.HIGH if currentElement['state'] else gpio.LOW)
+				output = "done"
+
+			elif url_path == '/module-info':
+				module = filter(lambda element: element['id'] == queryParams['id'], modulesPool)[0]
+				print module
+				output =  json.dumps(module)
+
 			elif url_path == '/set_volume':			
 				newVolume = float(queryParams['volume'])
 				pygame.mixer.music.set_volume(newVolume) # in percent 0 to 1.0
